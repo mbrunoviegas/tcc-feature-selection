@@ -12,47 +12,77 @@ class MainWindow():
         self.initUi()
 
     def initUi(self):
+        self.scale = 1
         self.canvas = Canvas(width=500, height=500, bg='black')
 
         self.fr_buttons = tk.Frame(self.window, relief=tk.RAISED, bd=2)
         self.btn_open = tk.Button(self.fr_buttons, text="Open", command=self.open_file)
         self.btn_save = tk.Button(self.fr_buttons, text="Save As...", command=self.save_file)
+        self.btn_zoom_in = tk.Button(self.fr_buttons, text="Zoom in", command=self.zoom_in)
         self.btn_zoom_out = tk.Button(self.fr_buttons, text="Zoom out", command=self.zoom_out)
-        self.btn_zoom_in = tk.Button(self.fr_buttons, text="Zoom out", command=self.zoom_in)
+        self.btn_zoom_reset = tk.Button(self.fr_buttons, text="Reset Zoom", command=self.zoom_reset)
         self.btn_selecionar = tk.Button(self.fr_buttons, text="Selecionar Área", command=self.selecionar)
 
         self.btn_open.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
         self.btn_save.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
-        self.btn_zoom_out.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
-        self.btn_zoom_in.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
-        self.btn_selecionar.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
+        self.btn_zoom_in.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
+        self.btn_zoom_out.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
+        self.btn_zoom_reset.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
+        self.btn_selecionar.grid(row=5, column=0, sticky="ew", padx=5, pady=5)
 
         self.fr_buttons.grid(row=0, column=0, sticky="ns")
         self.canvas.grid(row=0, column=1, sticky="nsew")
+        self.canvas.bind('<B1-Motion>', self.drag)
 
         self.window.mainloop()
 
     def open_file(self):
-        filepath = askopenfilename(
+        self.filepath = askopenfilename(
             filetypes=[("Image Files", "*.png *.tiff *.dicom *.dcm"), ("All Files", "*.*")]
         )
-        self.image = Image.open(filepath)
+        self.image = Image.open(self.filepath)
         self.photo = ImageTk.PhotoImage(self.image)
         self.canvas.create_image(250, 250, image=self.photo)
-        self.window.title(f"Trabalho Prático - {filepath}")
+        self.window.title(f"Trabalho Prático - {self.filepath}")
+        self.zoom_reset()
 
     def save_file(self):
         pass
 
     def zoom_in(self):
-        pass
+        self.scale = self.scale*1.5
+        self.redraw()
+        self.btn_zoom_out['state'] = ACTIVE
+        if (self.scale > 6):
+            self.btn_zoom_in['state'] = DISABLED
 
     def zoom_out(self):
+        self.scale = self.scale/1.5
+        self.redraw()
+        self.btn_zoom_in['state'] = ACTIVE
+        if (self.scale < 0.025):
+            self.btn_zoom_out['state'] = DISABLED
+
+    def zoom_reset(self):
+        self.btn_zoom_in['state'] = ACTIVE
+        self.btn_zoom_out['state'] = ACTIVE
+        self.scale = 1
+        self.redraw()
+
+    def redraw (self):
+        if self.photo:
+            self.canvas.delete(self.photo)
+        iw, ih = self.image.size
+        size = int(iw * self.scale), int(ih * self.scale)
+        self.photo = ImageTk.PhotoImage(self.image.resize(size))
+        self.canvas.create_image(250, 250, image=self.photo)
+
+
+    def selecionar(self, event):
         pass
 
-    def selecionar(self):
-        pass
-
+    def drag(self, event):
+      self.canvas.scan_dragto(event.x, event.y, gain=1)
 
 def main():
     MainWindow()
