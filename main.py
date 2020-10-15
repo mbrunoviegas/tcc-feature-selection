@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import *
 from PIL import Image, ImageTk
-from tkinter.filedialog import askopenfilename, asksaveasfilename
+from tkinter.filedialog import askopenfilename
 
 class MainWindow():
     def __init__(self):
@@ -12,7 +12,9 @@ class MainWindow():
         self.initUi()
 
     def initUi(self):
+        self.selecionando = bool(0)
         self.scale = 1
+        self.btn_selecionar_text = tk.StringVar()
         self.canvas = Canvas(width=500, height=500, bg='black')
 
         self.fr_buttons = tk.Frame(self.window, relief=tk.RAISED, bd=2)
@@ -21,7 +23,9 @@ class MainWindow():
         self.btn_zoom_in = tk.Button(self.fr_buttons, text="Zoom in", command=self.zoom_in)
         self.btn_zoom_out = tk.Button(self.fr_buttons, text="Zoom out", command=self.zoom_out)
         self.btn_zoom_reset = tk.Button(self.fr_buttons, text="Reset Zoom", command=self.zoom_reset)
-        self.btn_selecionar = tk.Button(self.fr_buttons, text="Selecionar Área", command=self.selecionar)
+        self.btn_selecionar = tk.Button(self.fr_buttons, textvariable=self.btn_selecionar_text, command=self.selecionar)
+
+        self.btn_selecionar_text.set('Selecionar Área')
 
         self.btn_open.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
         self.btn_save.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
@@ -33,6 +37,7 @@ class MainWindow():
         self.fr_buttons.grid(row=0, column=0, sticky="ns")
         self.canvas.grid(row=0, column=1, sticky="nsew")
         self.canvas.bind('<B1-Motion>', self.drag)
+        self.canvas.bind('<Button-1>', self.click)
 
         self.window.mainloop()
 
@@ -77,8 +82,15 @@ class MainWindow():
         self.photo = ImageTk.PhotoImage(self.image.resize(size))
         self.canvas.create_image(250, 250, image=self.photo)
 
+    def selecionar(self):
+        if (self.selecionando):
+            self.selecionando = bool(0)
+            self.btn_selecionar_text.set('Selecionar Área')
+        else:
+            self.selecionando = bool(1)
+            self.btn_selecionar_text.set('Cancelar Seleção')
 
-    def selecionar(self, event):
+    def click (self, event):
         pass
 
     def drag(self, event):
