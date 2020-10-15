@@ -3,6 +3,7 @@ from tkinter import *
 from PIL import Image, ImageTk
 from tkinter.filedialog import askopenfilename
 
+
 class MainWindow():
     def __init__(self):
         self.window = tk.Tk()
@@ -13,17 +14,24 @@ class MainWindow():
 
     def initUi(self):
         self.selecionando = bool(0)
+        self.ret_id = 0
         self.scale = 1
         self.btn_selecionar_text = tk.StringVar()
         self.canvas = Canvas(width=500, height=500, bg='black')
 
         self.fr_buttons = tk.Frame(self.window, relief=tk.RAISED, bd=2)
-        self.btn_open = tk.Button(self.fr_buttons, text="Open", command=self.open_file)
-        self.btn_save = tk.Button(self.fr_buttons, text="Save As...", command=self.save_file)
-        self.btn_zoom_in = tk.Button(self.fr_buttons, text="Zoom in", command=self.zoom_in)
-        self.btn_zoom_out = tk.Button(self.fr_buttons, text="Zoom out", command=self.zoom_out)
-        self.btn_zoom_reset = tk.Button(self.fr_buttons, text="Reset Zoom", command=self.zoom_reset)
-        self.btn_selecionar = tk.Button(self.fr_buttons, textvariable=self.btn_selecionar_text, command=self.selecionar)
+        self.btn_open = tk.Button(
+            self.fr_buttons, text="Open", command=self.open_file)
+        self.btn_save = tk.Button(
+            self.fr_buttons, text="Save As...", command=self.save_file)
+        self.btn_zoom_in = tk.Button(
+            self.fr_buttons, text="Zoom in", command=self.zoom_in)
+        self.btn_zoom_out = tk.Button(
+            self.fr_buttons, text="Zoom out", command=self.zoom_out)
+        self.btn_zoom_reset = tk.Button(
+            self.fr_buttons, text="Reset Zoom", command=self.zoom_reset)
+        self.btn_selecionar = tk.Button(
+            self.fr_buttons, textvariable=self.btn_selecionar_text, command=self.selecionar)
 
         self.btn_selecionar_text.set('Selecionar Área')
 
@@ -43,11 +51,12 @@ class MainWindow():
 
     def open_file(self):
         self.filepath = askopenfilename(
-            filetypes=[("Image Files", "*.png *.tiff *.dicom *.dcm"), ("All Files", "*.*")]
+            filetypes=[("Image Files", "*.png *.tiff *.dicom *.dcm"),
+                       ("All Files", "*.*")]
         )
         self.image = Image.open(self.filepath)
         self.photo = ImageTk.PhotoImage(self.image)
-        self.canvas.create_image(250, 250, image=self.photo)
+        self.id_img = self.canvas.create_image(250, 250, image=self.photo)
         self.window.title(f"Trabalho Prático - {self.filepath}")
         self.zoom_reset()
 
@@ -74,7 +83,7 @@ class MainWindow():
         self.scale = 1
         self.redraw()
 
-    def redraw (self):
+    def redraw(self):
         if self.photo:
             self.canvas.delete(self.photo)
         iw, ih = self.image.size
@@ -90,14 +99,27 @@ class MainWindow():
             self.selecionando = bool(1)
             self.btn_selecionar_text.set('Cancelar Seleção')
 
-    def click (self, event):
-        pass
+    def click(self, event):
+        self.canvas.scan_mark(event.x, event.y)
+        if(self.ret_id):
+            self.canvas.delete(self.ret_id)
+
+        if self.selecionando:
+            pos_x1 = event.x - 64
+            pos_y1 = event.y + 64
+            pos_x2 = event.x + 64
+            pos_y2 = event.y - 64
+            if pos_x1 > 0 and pos_x2 < self.canvas.winfo_width() and pos_y1 > 0 and pos_y2 < self.canvas.winfo_height():
+                self.ret_id = self.canvas.create_rectangle(
+                    pos_x1, pos_y1, pos_x2, pos_y2, outline="green")
 
     def drag(self, event):
-      self.canvas.scan_dragto(event.x, event.y, gain=1)
+        self.canvas.scan_dragto(event.x, event.y, gain=1)
+
 
 def main():
     MainWindow()
+
 
 main()
 
