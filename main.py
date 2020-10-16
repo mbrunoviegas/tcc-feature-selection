@@ -151,13 +151,13 @@ class MainWindow():
         self.canvas.scan_dragto(event.x, event.y, gain=1)
 
     def read_directory(self):
-        self.onlyfiles1 = [f for f in listdir("../images/1") if isfile(join("../images/1", f))]
+        self.onlyfiles1 = [f for f in listdir("images/1") if isfile(join("images/1", f))]
         print("--------- Diretorio 1 ---------\n", self.onlyfiles1)
-        self.onlyfiles2 = [f for f in listdir("../images/2") if isfile(join("../images/2", f))]
+        self.onlyfiles2 = [f for f in listdir("images/2") if isfile(join("images/2", f))]
         print("\n--------- Diretorio 2 ---------\n", self.onlyfiles2)
-        self.onlyfiles3 = [f for f in listdir("../images/3") if isfile(join("../images/3", f))]
+        self.onlyfiles3 = [f for f in listdir("images/3") if isfile(join("images/3", f))]
         print("\n--------- Diretorio 3 ---------\n", self.onlyfiles3)
-        self.onlyfiles4 = [f for f in listdir("../images/4") if isfile(join("../images/4", f))]
+        self.onlyfiles4 = [f for f in listdir("images/4") if isfile(join("images/4", f))]
         print("\n--------- Diretorio 4 ---------\n", self.onlyfiles4)
 
     def characteristics(self):
