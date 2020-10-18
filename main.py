@@ -119,7 +119,15 @@ class MainWindow():
         self.openImage(self.png_name)
 
     def save_file(self):
-        pass
+        if (self.ret_id):
+            x = self.x_center * self.scale - (64 * self.scale)
+            y = self.y_center * self.scale - (64 * self.scale)
+            print (self.x_center, self.x_center, x , y)
+            cropped = self.image.crop(( x, y, x + 128, y + 128))
+            cropped.load()
+            cropped.save("recorte.png", "PNG")
+        else:
+            print("Selecione uma área na imagem carregada")
 
     def zoom_in(self):
         self.scale = self.scale*1.5
