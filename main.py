@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 from tkinter.filedialog import askopenfilename
 from os import listdir
 from os.path import isfile, join
+import SimpleITK as sitk
 
 # TODO Arrumar o cancelar selecção
 # TODO Abrir diretórios
@@ -11,13 +12,14 @@ from os.path import isfile, join
 # TODO Arrumar referencia ao mexer a imagem
 # TODO Colocar os botões que faltam
 
-# (a) ler o diretório de imagens de treino/teste; 
+# (a) ler o diretório de imagens de treino/teste;
 # (b) selecionar as características a serem usadas; ---- Botao Criado
 # (c) treinar o classificador;  ---- Botao Criado
 # (d) abrir e visualizar uma imagem; ---- FEITO
 # (e) marcar a região de interesse da imagem visualizada com o mouse; ------- FEITO
 #  (f) calcular e exibir as características para a imagem visualizada ou área selecionada;
 #  (g) classificar a imagem ou a região de interesse selecionada com o mouse.
+
 
 class MainWindow():
     def __init__(self):
@@ -33,8 +35,7 @@ class MainWindow():
         self.ret_id = 0
         self.btn_selecionar_text = tk.StringVar()
         self.btn_selecionar_text.set('Selection')
-        self.canvas = Canvas(width=500, height=500, bg='white')
-
+        self.canvas = Canvas(width=250, height=250, bg='white')
 
         self.fr_buttons = tk.Frame(self.window, relief=tk.RAISED, bd=2)
         self.btn_open = tk.Button(
@@ -51,9 +52,9 @@ class MainWindow():
             self.fr_buttons, textvariable=self.btn_selecionar_text, command=self.selecionar)
         self.btn_read_directory = tk.Button(
             self.fr_buttons, text="Read Directories", command=self.read_directory)
-        self.btn_characteristics= tk.Button(
+        self.btn_characteristics = tk.Button(
             self.fr_buttons, text="Characteristics", command=self.characteristics)
-        self.btn_classify= tk.Button(
+        self.btn_classify = tk.Button(
             self.fr_buttons, text="Classify", command=self.classify)
 
         self.btn_open.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
@@ -62,8 +63,10 @@ class MainWindow():
         self.btn_zoom_out.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
         self.btn_zoom_reset.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
         self.btn_selecionar.grid(row=5, column=0, sticky="ew", padx=5, pady=5)
-        self.btn_read_directory.grid(row=6, column=0, sticky="ew", padx=5, pady=5)
-        self.btn_characteristics.grid(row=7, column=0, sticky="ew", padx=5, pady=5)
+        self.btn_read_directory.grid(
+            row=6, column=0, sticky="ew", padx=5, pady=5)
+        self.btn_characteristics.grid(
+            row=7, column=0, sticky="ew", padx=5, pady=5)
         self.btn_classify.grid(row=8, column=0, sticky="ew", padx=5, pady=5)
 
         self.fr_buttons.grid(row=0, column=0, sticky="ns")
@@ -75,14 +78,27 @@ class MainWindow():
 
     def open_file(self):
         self.filepath = askopenfilename(
-            filetypes=[("Image Files", "*.png *.tiff *.dicom *.dcm"),
+            filetypes=[("Image Files", "*.png *.tiff *.dcm"),
                        ("All Files", "*.*")]
         )
-        self.image = Image.open(self.filepath)
+        extention = self.filepath.split('.')[-1]
+        if (extention == 'dcm'):
+            self.openDicom(self.filepath)
+        else: 
+            self.openImage(self.filepath)
+
+    def openImage(self, imgPath):
+        self.image = Image.open(imgPath)
         self.photo = ImageTk.PhotoImage(self.image)
         self.id_img = self.canvas.create_image(250, 250, image=self.photo)
-        self.window.title(f"Trabalho Prático - {self.filepath}")
+        self.window.title(f"Trabalho Prático - {imgPath}")
         self.zoom_reset()
+
+    def openDicom(self, filepath):
+        self.dicom_name = self.filepath.split('/')[-1]
+        self.png_name = self.dicom_name.replace('.dcm', '.png')
+        self.convert_image(self.dicom_name, self.png_name)
+        self.openImage(self.png_name)
 
     def save_file(self):
         pass
@@ -151,13 +167,17 @@ class MainWindow():
         self.canvas.scan_dragto(event.x, event.y, gain=1)
 
     def read_directory(self):
-        self.onlyfiles1 = [f for f in listdir("images/1") if isfile(join("images/1", f))]
+        self.onlyfiles1 = [f for f in listdir(
+            "images/1") if isfile(join("images/1", f))]
         print("--------- Diretorio 1 ---------\n", self.onlyfiles1)
-        self.onlyfiles2 = [f for f in listdir("images/2") if isfile(join("images/2", f))]
+        self.onlyfiles2 = [f for f in listdir(
+            "images/2") if isfile(join("images/2", f))]
         print("\n--------- Diretorio 2 ---------\n", self.onlyfiles2)
-        self.onlyfiles3 = [f for f in listdir("images/3") if isfile(join("images/3", f))]
+        self.onlyfiles3 = [f for f in listdir(
+            "images/3") if isfile(join("images/3", f))]
         print("\n--------- Diretorio 3 ---------\n", self.onlyfiles3)
-        self.onlyfiles4 = [f for f in listdir("images/4") if isfile(join("images/4", f))]
+        self.onlyfiles4 = [f for f in listdir(
+            "images/4") if isfile(join("images/4", f))]
         print("\n--------- Diretorio 4 ---------\n", self.onlyfiles4)
 
     def characteristics(self):
@@ -167,8 +187,32 @@ class MainWindow():
         pass
 
 
+    def convert_image(self, input_file_name, output_file_name):
+        try:
+            image_file_reader = sitk.ImageFileReader()
+            image_file_reader.SetImageIO('GDCMImageIO')
+            image_file_reader.SetFileName(input_file_name)
+            image_file_reader.ReadImageInformation()
+            image_size = list(image_file_reader.GetSize())
+            
+            if len(image_size) == 3 and image_size[2] == 1:
+                image_size[2] = 0
+            
+            image_file_reader.SetExtractSize(image_size)
+            image = image_file_reader.Execute()
+
+            if image.GetNumberOfComponentsPerPixel() == 1:
+                image = sitk.RescaleIntensity(image, 0, 255)
+                if image_file_reader.GetMetaData('0028|0004').strip() == 'MONOCHROME1':
+                    image = sitk.InvertIntensity(image, maximum=255)
+                image = sitk.Cast(image, sitk.sitkUInt8)
+
+            sitk.WriteImage(image, output_file_name)
+            return True
+        except BaseException:
+            return False
+
 def main():
     MainWindow()
-
 
 main()
