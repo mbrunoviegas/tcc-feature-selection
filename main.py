@@ -68,14 +68,13 @@ class MainWindow():
         self.window.mainloop()
 
     def createCanvas(self, width, height):
-
         self.fr_canvas = tk.Frame(self.window, relief=tk.RAISED, bd=2)
         self.fr_canvas.grid(row=0, column=1, sticky="nsew")
         scroll_area = width, height
-        if (width > 800):
+        if (width > 1080):
             width = 1080
         if (height > 600):
-            height = 720
+            height = 600
         self.canvas = Canvas(self.fr_canvas, width=width, height=height)
         self.canvas.grid(row=0, column=0, sticky="nsew")
         self.fr_canvas.grid_columnconfigure(0, weight=1)
@@ -164,24 +163,24 @@ class MainWindow():
             self.btn_selection_text.set('Cancel Selection')
 
     def click(self, event):
-        self.canvas.scan_mark(event.x, event.y)
+        x = self.canvas.canvasx(event.x)
+        y = self.canvas.canvasy(event.y)
         if(self.ret_id):
             self.canvas.delete(self.ret_id)
 
         if self.selecionando:
-            self.x_center = event.x
-            self.y_center = event.y
-            self.drawRectangle(event.x, event.y)
+            self.x_center = x
+            self.y_center = y
+            self.drawRectangle(x, y)
 
     def drawRectangle(self, x, y):
-        pos_x1 = x - 64 * (self.scale)
-        pos_y1 = y + 64 * (self.scale)
-        pos_x2 = x + 64 * (self.scale)
-        pos_y2 = y - 64 * (self.scale)
+        pos_x1 = x * (self.scale) - 64 * (self.scale)
+        pos_y1 = y * (self.scale) + 64 * (self.scale)
+        pos_x2 = x * (self.scale) + 64 * (self.scale)
+        pos_y2 = y * (self.scale) - 64 * (self.scale)
 
-        if pos_x1 > 0 and pos_x2 < self.canvas.winfo_width() and pos_y1 > 0 and pos_y2 < self.canvas.winfo_height():
-            self.ret_id = self.canvas.create_rectangle(
-                pos_x1, pos_y1, pos_x2, pos_y2, outline="green")
+        self.ret_id = self.canvas.create_rectangle(
+            pos_x1, pos_y1, pos_x2, pos_y2, outline="green")
 
     def drag(self, event):
         self.canvas.scan_dragto(event.x, event.y, gain=1)
