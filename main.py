@@ -7,10 +7,7 @@ from os.path import isfile, join
 import SimpleITK as sitk
 
 # TODO Arrumar o cancelar selecção
-# TODO Abrir diretórios
-# TODO Arrumar o zoom
-# TODO Arrumar referencia ao mexer a imagem
-# TODO Colocar os botões que faltam
+# TODO Colocar  CROP
 
 # (a) ler o diretório de imagens de treino/teste;
 # (b) selecionar as características a serem usadas; ---- Botao Criado
@@ -25,17 +22,14 @@ class MainWindow():
     def __init__(self):
         self.window = tk.Tk()
         self.window.title("Trabalho Prático")
-        self.window.rowconfigure(0, minsize=800, weight=1)
-        self.window.columnconfigure(1, minsize=800, weight=1)
         self.initUi()
 
     def initUi(self):
         self.selecionando = bool(0)
         self.scale = 1
         self.ret_id = 0
-        self.btn_selecionar_text = tk.StringVar()
-        self.btn_selecionar_text.set('Selection')
-        self.canvas = Canvas(width=250, height=250, bg='white')
+        self.btn_selection_text = tk.StringVar()
+        self.btn_selection_text.set('Selection')
 
         self.fr_buttons = tk.Frame(self.window, relief=tk.RAISED, bd=2)
         self.btn_open = tk.Button(
@@ -48,8 +42,8 @@ class MainWindow():
             self.fr_buttons, text="Zoom out", command=self.zoom_out)
         self.btn_zoom_reset = tk.Button(
             self.fr_buttons, text="Reset Zoom", command=self.zoom_reset)
-        self.btn_selecionar = tk.Button(
-            self.fr_buttons, textvariable=self.btn_selecionar_text, command=self.selecionar)
+        self.btn_selection = tk.Button(
+            self.fr_buttons, textvariable=self.btn_selection_text, command=self.selection)
         self.btn_read_directory = tk.Button(
             self.fr_buttons, text="Read Directories", command=self.read_directory)
         self.btn_characteristics = tk.Button(
@@ -62,7 +56,7 @@ class MainWindow():
         self.btn_zoom_in.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
         self.btn_zoom_out.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
         self.btn_zoom_reset.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
-        self.btn_selecionar.grid(row=5, column=0, sticky="ew", padx=5, pady=5)
+        self.btn_selection.grid(row=5, column=0, sticky="ew", padx=5, pady=5)
         self.btn_read_directory.grid(
             row=6, column=0, sticky="ew", padx=5, pady=5)
         self.btn_characteristics.grid(
@@ -70,34 +64,59 @@ class MainWindow():
         self.btn_classify.grid(row=8, column=0, sticky="ew", padx=5, pady=5)
 
         self.fr_buttons.grid(row=0, column=0, sticky="ns")
-        self.canvas.grid(row=0, column=1, sticky="nsew")
-        self.canvas.bind('<B1-Motion>', self.drag)
-        self.canvas.bind('<Button-1>', self.click)
 
         self.window.mainloop()
+
+    def createCanvas(self, width, height):
+
+        self.fr_canvas = tk.Frame(self.window, relief=tk.RAISED, bd=2)
+        self.fr_canvas.grid(row=0, column=1, sticky="nsew")
+        scroll_area = width, height
+        if (width > 800):
+            width = 1080
+        if (height > 600):
+            height = 720
+        self.canvas = Canvas(self.fr_canvas, width=width, height=height)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.fr_canvas.grid_columnconfigure(0, weight=1)
+        self.fr_canvas.grid_rowconfigure(0, weight=1)
+        self.scrollbarY = Scrollbar(
+            self.fr_canvas, orient="vertical", command=self.canvas.yview)
+        self.scrollbarX = Scrollbar(
+            self.fr_canvas, orient="horizontal", command=self.canvas.xview)
+        self.scrollbarY.grid(row=0, column=1, sticky='ns')
+        self.scrollbarX.grid(row=1, column=0, sticky='ew')
+        self.canvas.configure(yscrollcommand=self.scrollbarY.set,
+                              xscrollcommand=self.scrollbarX.set)
+        self.canvas.configure(scrollregion=(
+            0, 0, scroll_area[0], scroll_area[1]))
+
+        self.canvas.bind('<Button-1>', self.click)
 
     def open_file(self):
         self.filepath = askopenfilename(
             filetypes=[("Image Files", "*.png *.tiff *.dcm"),
                        ("All Files", "*.*")]
         )
-        extention = self.filepath.split('.')[-1]
-        if (extention == 'dcm'):
+        file_type = self.filepath.split('.')[-1]
+        if (file_type == 'dcm'):
             self.openDicom(self.filepath)
-        else: 
+        else:
             self.openImage(self.filepath)
 
     def openImage(self, imgPath):
         self.image = Image.open(imgPath)
+        self.width, self.height = self.image.size
         self.photo = ImageTk.PhotoImage(self.image)
-        self.id_img = self.canvas.create_image(250, 250, image=self.photo)
+        self.createCanvas(self.width, self.height)
+        self.id_img = self.canvas.create_image(
+            0, 0, image=self.photo, anchor=NW)
         self.window.title(f"Trabalho Prático - {imgPath}")
         self.zoom_reset()
 
     def openDicom(self, filepath):
-        self.dicom_name = self.filepath.split('/')[-1]
-        self.png_name = self.dicom_name.replace('.dcm', '.png')
-        self.convert_image(self.dicom_name, self.png_name)
+        self.png_name = self.filepath.replace('.dcm', '.png')
+        self.convert_image(filepath, self.png_name)
         self.openImage(self.png_name)
 
     def save_file(self):
@@ -126,22 +145,23 @@ class MainWindow():
     def redraw(self):
         if self.photo:
             self.canvas.delete(self.photo)
-        iw, ih = self.image.size
-        size = int(iw * self.scale), int(ih * self.scale)
-        self.photo = ImageTk.PhotoImage(self.image.resize(size))
-        self.canvas.create_image(250, 250, image=self.photo)
+        self.size = int(self.width * self.scale), int(self.height * self.scale)
+        self.photo = ImageTk.PhotoImage(self.image.resize(self.size))
+        self.width_resize, self.height_resize = self.size
+        self.createCanvas(self.width_resize, self.height_resize)
+        self.canvas.create_image(0, 0, image=self.photo,  anchor=NW)
         if (self.ret_id):
             self.canvas.delete(self.ret_id)
             if(self.selecionando):
                 self.drawRectangle(self.x_center, self.y_center)
 
-    def selecionar(self):
+    def selection(self):
         if (self.selecionando):
             self.selecionando = bool(0)
-            self.btn_selecionar_text.set('Seletion')
+            self.btn_selection_text.set('Seletion')
         else:
             self.selecionando = bool(1)
-            self.btn_selecionar_text.set('Cancel Selection')
+            self.btn_selection_text.set('Cancel Selection')
 
     def click(self, event):
         self.canvas.scan_mark(event.x, event.y)
@@ -186,7 +206,6 @@ class MainWindow():
     def classify(self):
         pass
 
-
     def convert_image(self, input_file_name, output_file_name):
         try:
             image_file_reader = sitk.ImageFileReader()
@@ -194,10 +213,10 @@ class MainWindow():
             image_file_reader.SetFileName(input_file_name)
             image_file_reader.ReadImageInformation()
             image_size = list(image_file_reader.GetSize())
-            
+
             if len(image_size) == 3 and image_size[2] == 1:
                 image_size[2] = 0
-            
+
             image_file_reader.SetExtractSize(image_size)
             image = image_file_reader.Execute()
 
