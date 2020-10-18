@@ -20,7 +20,7 @@ class MainWindow():
         self.btn_open = tk.Button(
             self.fr_buttons, text="Open", command=self.openFile)
         self.btn_save = tk.Button(
-            self.fr_buttons, text="Save As...", command=self.saveFile)
+            self.fr_buttons, text="Save Selection", command=self.saveFile)
         self.btn_zoom_in = tk.Button(
             self.fr_buttons, text="Zoom in", command=self.zoom_in)
         self.btn_zoom_out = tk.Button(
@@ -35,6 +35,8 @@ class MainWindow():
             self.fr_buttons, text="Characteristics", command=self.characteristics)
         self.btn_classify = tk.Button(
             self.fr_buttons, text="Classify", command=self.classify)
+        self.btn_train = tk.Button(
+            self.fr_buttons, text="Train", command=self.classify)
 
         self.btn_open.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
         self.btn_save.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
@@ -47,6 +49,7 @@ class MainWindow():
         self.btn_characteristics.grid(
             row=7, column=0, sticky="ew", padx=5, pady=5)
         self.btn_classify.grid(row=8, column=0, sticky="ew", padx=5, pady=5)
+        self.btn_train.grid(row=9, column=0, sticky="ew", padx=5, pady=5)
 
         self.fr_buttons.grid(row=0, column=0, sticky="ns")
         self.window.mainloop()
@@ -170,6 +173,9 @@ class MainWindow():
         pass
 
     def classify(self):
+        pass
+
+    def train(self):
         pass
 
 
