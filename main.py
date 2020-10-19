@@ -99,7 +99,7 @@ class MainWindow():
             self.zoom_reset()
 
     def saveFile(self):
-        if (self.ret_id):
+        if (self.ret_id and self.selecting):
             self.file.save_file(
                 self.x_center, self.y_center, self.scale, self.image)
             print("Imagem salva")
@@ -142,6 +142,8 @@ class MainWindow():
         if (self.selecting):
             self.selecting = bool(0)
             self.btn_selection_text.set('Seletion')
+            if(self.ret_id):
+                self.canvas.delete(self.ret_id)
         else:
             self.selecting = bool(1)
             self.btn_selection_text.set('Cancel Selection')
